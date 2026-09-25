@@ -1,0 +1,47 @@
+name: Update edgetunnel configuration
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches: [release]
+    paths:
+      - scripts/generate_edgetunnel.py
+      - scripts/test_generate_edgetunnel.py
+      - .github/workflows/edgetunnel.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: edgetunnel-config
+  cancel-in-progress: false
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release
+      - name: Test generator
+        run: python3 -m unittest discover -s scripts -p 'test_*.py'
+      - name: Fetch upstream and generate
+        run: |
+          curl --fail --location --retry 3 --max-time 60 \
+            https://raw.githubusercontent.com/Johnshall/Shadowrocket-ADBlock-Rules-Forever/release/lazy_group.conf \
+            --output "$RUNNER_TEMP/lazy_group.conf"
+          python3 scripts/generate_edgetunnel.py "$RUNNER_TEMP/lazy_group.conf" edgetunnel.conf
+      - name: Publish only changed output
+        run: |
+          git add edgetunnel.conf
+          if git diff --cached --quiet; then
+            echo 'Configuration unchanged'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'Update edgetunnel configuration from upstream'
+          git push origin HEAD:release

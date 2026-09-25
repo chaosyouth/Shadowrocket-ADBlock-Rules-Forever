@@ -23,6 +23,7 @@ on:
   
 jobs:
   Release:
+    if: github.repository == 'Johnshall/Shadowrocket-ADBlock-Rules-Forever'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
