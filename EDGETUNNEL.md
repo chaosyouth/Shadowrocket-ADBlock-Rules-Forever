@@ -11,7 +11,7 @@ https://raw.githubusercontent.com/chaosyouth/Shadowrocket-ADBlock-Rules-Forever/
 
 自动优选每 300 秒测试一次，超时 5 秒，容差 50 毫秒；按测试延迟与可用性选择，不是下载带宽测速，也不承诺已有连接无缝迁移。
 
-Actions 每小时第 17 分钟读取 Johnshall 的 release/lazy_group.conf，仅内容改变时提交 edgetunnel.conf。保留上游匹配条件、顺序、直连和拦截策略，只添加自动优选组并替换 PROXY 策略引用。节点地址和订阅令牌不写入此公开仓库。
+Actions 每天北京时间 09:00（UTC 01:00）读取 Johnshall 的 release/lazy_group.conf，仅内容改变时提交 edgetunnel.conf。保留上游匹配条件、顺序、直连和拦截策略，只添加自动优选组并替换 PROXY 策略引用。节点地址和订阅令牌不写入此公开仓库。
 
 可在 Actions → Update edgetunnel configuration → Run workflow 手动更新。使用仓库自带 GITHUB_TOKEN，无需另设密钥。GitHub 定时任务可能延迟，公开仓库长期无活动时也可能被暂停。
 
