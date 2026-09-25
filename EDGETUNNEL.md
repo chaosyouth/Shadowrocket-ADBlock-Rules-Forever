@@ -7,7 +7,7 @@
 含策略组的懒人配置地址：
 https://chaosyouth.github.io/Shadowrocket-ADBlock-Rules-Forever/custom/lazy_group.conf
 
-之前的 `release/edgetunnel.conf` 地址继续可用，其内容与 `custom/lazy_group.conf` 相同。
+之前的 `release/edgetunnel.conf` 地址继续可用，其规则与 `custom/lazy_group.conf` 相同，仅 `update-url` 指向各自的下载地址。
 
 ## 仅叠加 CF 优选
 
@@ -19,6 +19,8 @@ https://chaosyouth.github.io/Shadowrocket-ADBlock-Rules-Forever/custom/lazy_grou
 生成时，仅将上游规则和应用组中的通用 `PROXY` 引用接入 `节点选择`；若应用组按名称默认选择 PROXY，该引用也随之调整。应用组的候选顺序、默认选择位置、地区组、规则匹配与顺序均保持上游设定。
 
 **DNS、IPv6、QUIC、Hosts、URL 重写、MITM 等其他设置全部沿用上游，不叠加本机设置。** 无代理引用的纯广告规则或直连配置不添加 CF 策略组。若上游出现同名 CF 组，生成失败并保留已发布配置，避免覆盖上游设置。
+
+每个生成配置的 `[General]` 都包含指向自身 GitHub Pages 地址的 `update-url`；已有值会被替换，避免更新回上游原版。纯规则文件仅补充包含该字段的 `[General]`，规则不变。
 
 ## 使用和更新
 

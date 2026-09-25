@@ -3,9 +3,24 @@
 import json
 from pathlib import Path
 import sys
+from urllib.parse import quote
 
 REFERENCE_PATH = Path(__file__).resolve().parents[1] / "custom/reference.json"
 GROUP = "节点选择"
+PAGES_URL = "https://chaosyouth.github.io/Shadowrocket-ADBlock-Rules-Forever/"
+
+
+def with_update_url(content, relative_path):
+    lines = content.splitlines()
+    if "[General]" not in lines:
+        index = next(i for i, line in enumerate(lines) if line.startswith("["))
+        lines[index:index] = ["[General]", ""]
+    start = lines.index("[General]") + 1
+    end = next((i for i in range(start, len(lines)) if lines[i].startswith("[")), len(lines))
+    settings = [line for line in lines[start:end]
+                if line.split("=", 1)[0].strip().lower() != "update-url"]
+    lines[start:end] = [f"update-url = {PAGES_URL}{quote(relative_path, safe='/')}", *settings]
+    return "\n".join(lines) + "\n"
 
 
 def generate(source):
@@ -71,14 +86,15 @@ def generate_all(source_dir, destination_dir, legacy_path):
     if not sources or not (source_dir / "lazy_group.conf").is_file():
         raise ValueError("上游配置集合不完整，停止发布")
     # Validate every input before replacing any published output.
-    results = {path.name: generate(path.read_text(encoding="utf-8-sig")) for path in sources}
+    results = {path.name: with_update_url(generate(path.read_text(encoding="utf-8-sig")), "custom/" + path.name)
+               for path in sources}
     destination_dir.mkdir(parents=True, exist_ok=True)
     for name, content in results.items():
         (destination_dir / name).write_text(content, encoding="utf-8")
     for path in destination_dir.glob("*.conf"):
         if path.name not in results:
             path.unlink()
-    legacy_path.write_text(results["lazy_group.conf"], encoding="utf-8")
+    legacy_path.write_text(with_update_url(results["lazy_group.conf"], "edgetunnel.conf"), encoding="utf-8")
     print(f"Generated {len(results)} custom configurations")
 
 

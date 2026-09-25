@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
 
-from generate_edgetunnel import GROUP, REFERENCE_PATH, generate, generate_all
+from generate_edgetunnel import GROUP, REFERENCE_PATH, PAGES_URL, generate, generate_all, with_update_url
 
 
 def entries(text, section):
@@ -100,7 +100,9 @@ example.com = 1.2.3.4
             (dest / 'reference.json').write_text('keep')
             generate_all(source, dest, legacy)
             self.assertEqual({p.name for p in dest.glob('*.conf')}, {'lazy_group.conf', 'new.conf'})
-            self.assertEqual(legacy.read_bytes(), (dest / 'lazy_group.conf').read_bytes())
+            self.assertEqual(legacy.read_text(), with_update_url((dest / 'lazy_group.conf').read_text(), 'edgetunnel.conf'))
+            for filename in ('lazy_group.conf', 'new.conf'):
+                self.assertIn('update-url = ' + PAGES_URL + 'custom/' + filename, (dest / filename).read_text())
             self.assertEqual((dest / 'reference.json').read_text(), 'keep')
             before = legacy.read_bytes()
             (source / 'new.conf').write_text('invalid upstream response')
@@ -113,3 +115,17 @@ example.com = 1.2.3.4
         self.assertEqual(set(ref), {'groups'})
         self.assertNotIn('ca-p12', json.dumps(ref))
         self.assertNotIn('password=', json.dumps(ref))
+
+    def test_update_url_replaces_existing_and_is_idempotent(self):
+        source = self.source.replace('[General]', '[General]\nupdate-url = https://old.example/a.conf\nUPDATE-URL=https://old.example/b.conf')
+        result = with_update_url(source, 'custom/lazy_group.conf')
+        urls = [line for line in entries(result, '[General]') if line.startswith('update-url')]
+        self.assertEqual(urls, ['update-url = ' + PAGES_URL + 'custom/lazy_group.conf'])
+        self.assertEqual(result, with_update_url(result, 'custom/lazy_group.conf'))
+        self.assertEqual(entries(result, '[Rule]'), entries(source, '[Rule]'))
+
+    def test_update_url_added_to_rule_only_config(self):
+        source = '[Rule]\nDOMAIN,ads.example,REJECT\n'
+        result = with_update_url(source, 'custom/sr_ad_only.conf')
+        self.assertEqual(entries(result, '[General]'), ['update-url = ' + PAGES_URL + 'custom/sr_ad_only.conf'])
+        self.assertEqual(entries(result, '[Rule]'), entries(source, '[Rule]'))
