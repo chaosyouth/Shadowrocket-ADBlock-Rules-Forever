@@ -6,7 +6,7 @@ import sys
 from urllib.parse import quote
 
 REFERENCE_PATH = Path(__file__).resolve().parents[1] / "custom/reference.json"
-GROUP = "节点选择"
+GROUP = "CF最优"
 PAGES_URL = "https://chaosyouth.github.io/Shadowrocket-ADBlock-Rules-Forever/"
 
 

@@ -46,12 +46,13 @@ example.com = 1.2.3.4
         actual = dict(line.split(' = ', 1) for line in entries(result, '[Proxy Group]'))
         for name, value in ref['groups'].items():
             self.assertEqual(actual[name], value)
-        self.assertEqual(len(actual), 4)
+        self.assertEqual(len(actual), 3)
         self.assertEqual(actual['香港节点'], 'url-test,policy-regex-filter=HK')
         for section in ('[General]', '[Host]'):
             self.assertEqual(entries(result, section), entries(self.source, section))
-        self.assertIn('select,自动选择｜CF最优,PROXY,policy-select-name=自动选择｜CF最优', result)
-        self.assertNotIn('select,自动选择｜CF最优,节点选择', result)
+        self.assertIn('CF最优 = url-test,EDGETUNNEL.CHAOSYOUTH.COM,use=true', result)
+        self.assertNotIn('节点选择', result)
+        self.assertNotIn('自动选择｜CF最优', result)
         self.assertIn('interval=60,tolerance=50,timeout=5', result)
 
     def test_application_defaults_and_other_sections_preserved(self):
@@ -62,11 +63,11 @@ example.com = 1.2.3.4
         for section in ('[General]', '[Host]', '[URL Rewrite]', '[MITM]'):
             self.assertEqual(entries(result, section), entries(source, section))
         selected = generate(self.source.replace('select=1', 'policy-select-name=PROXY'))
-        self.assertIn('policy-select-name=节点选择', selected)
+        self.assertIn('policy-select-name=CF最优', selected)
 
     def test_conflicting_upstream_group_rejected(self):
         with self.assertRaises(ValueError):
-            generate(self.source.replace('媒体 =', '节点选择 ='))
+            generate(self.source.replace('媒体 =', 'CF最优 ='))
 
     def test_invalid_source_rejected(self):
         for source in ('<html>Error</html>', self.source + '[Rule]\n'):

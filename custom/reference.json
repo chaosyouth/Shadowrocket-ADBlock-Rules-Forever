@@ -1,6 +1,5 @@
 {
   "groups": {
-    "节点选择": "select,自动选择｜CF最优,PROXY,policy-select-name=自动选择｜CF最优",
-    "自动选择｜CF最优": "url-test,EDGETUNNEL.CHAOSYOUTH.COM,use=true,interval=60,tolerance=50,timeout=5,url=http://www.gstatic.com/generate_204"
+    "CF最优": "url-test,EDGETUNNEL.CHAOSYOUTH.COM,use=true,interval=60,tolerance=50,timeout=5,url=http://www.gstatic.com/generate_204"
   }
 }
