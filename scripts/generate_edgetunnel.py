@@ -1,4 +1,4 @@
-"""Overlay the active Shadowrocket profile's preferences on upstream rules."""
+"""Add CF auto-selection while preserving all other upstream settings."""
 
 import json
 from pathlib import Path
@@ -6,20 +6,6 @@ import sys
 
 REFERENCE_PATH = Path(__file__).resolve().parents[1] / "custom/reference.json"
 GROUP = "节点选择"
-
-
-def overlay_settings(lines, settings):
-    """Keep upstream comments and new keys; override matching reference keys."""
-    result, seen = [], set()
-    for line in lines:
-        if line.strip() and not line.lstrip().startswith("#") and "=" in line:
-            key = line.split("=", 1)[0].strip()
-            if key in settings:
-                line = f"{key} = {settings[key]}"
-                seen.add(key)
-        result.append(line)
-    result.extend(f"{key} = {value}" for key, value in settings.items() if key not in seen)
-    return result
 
 
 def generate(source):
@@ -50,22 +36,23 @@ def generate(source):
             sections["[Rule]"][index] = ",".join(parts)
             replacements += 1
 
-    groups = sections.get("[Proxy Group]", [])
-    has_groups = any(line.strip() and not line.lstrip().startswith("#") for line in groups)
-    use_groups = bool(replacements or has_groups)
+    groups = sections.get("[Proxy Group]", []).copy()
+    for index, line in enumerate(groups):
+        if line.strip() and not line.lstrip().startswith("#") and "=" in line:
+            key, value = line.split("=", 1)
+            if key.strip() in reference["groups"]:
+                raise ValueError("上游存在同名 CF 策略组，停止发布以避免覆盖")
+            parts = value.split(",")
+            for part_index, part in enumerate(parts):
+                if part.strip().upper() == "PROXY":
+                    parts[part_index] = GROUP
+                    replacements += 1
+                elif part.strip().lower() == "policy-select-name=proxy":
+                    parts[part_index] = "policy-select-name=" + GROUP
+            groups[index] = key + "=" + ",".join(parts)
+    use_groups = bool(replacements)
     if use_groups:
-        # Preserve newly introduced upstream groups, routing generic PROXY via the selector.
-        for index, line in enumerate(groups):
-            if line.strip() and not line.lstrip().startswith("#") and "=" in line:
-                key, value = line.split("=", 1)
-                groups[index] = key + "=" + ",".join(
-                    GROUP if part.strip().upper() == "PROXY" else part for part in value.split(",")
-                )
-        groups = overlay_settings(groups, reference["groups"])
-
-    if "[General]" in sections:
-        sections["[General]"] = overlay_settings(sections["[General]"], reference["general"])
-        sections["[Host]"] = overlay_settings(sections.get("[Host]", []), reference["hosts"])
+        groups.extend(f"{key} = {value}" for key, value in reference["groups"].items())
 
     output = ["# 自动生成；个人设置请修改 custom/reference.json。"]
     for name, lines in sections.items():

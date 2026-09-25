@@ -40,19 +40,33 @@ example.com = 1.2.3.4
         self.assertIn(f'媒体 = select,DIRECT,{GROUP},香港节点,select=1', result)
         self.assertEqual(result, generate(self.source))
 
-    def test_current_settings_and_groups_applied(self):
+    def test_only_cf_groups_added(self):
         result = generate(self.source)
         ref = json.loads(REFERENCE_PATH.read_text())
-        for key, section in [('general', '[General]'), ('groups', '[Proxy Group]'), ('hosts', '[Host]')]:
-            actual = dict(line.split(' = ', 1) for line in entries(result, section))
-            for name, value in ref[key].items():
-                self.assertEqual(actual[name], value)
-        self.assertIn('upstream-new-setting = true', result)
-        self.assertIn('example.com = 1.2.3.4', result)
+        actual = dict(line.split(' = ', 1) for line in entries(result, '[Proxy Group]'))
+        for name, value in ref['groups'].items():
+            self.assertEqual(actual[name], value)
+        self.assertEqual(len(actual), 4)
+        self.assertEqual(actual['香港节点'], 'url-test,policy-regex-filter=HK')
+        for section in ('[General]', '[Host]'):
+            self.assertEqual(entries(result, section), entries(self.source, section))
         self.assertIn('select,自动选择｜CF最优,PROXY,policy-select-name=自动选择｜CF最优', result)
         self.assertNotIn('select,自动选择｜CF最优,节点选择', result)
         self.assertIn('interval=60,tolerance=50,timeout=5', result)
-        self.assertIn('policy-select-name=DIRECT', result)
+
+    def test_application_defaults_and_other_sections_preserved(self):
+        source = self.source.replace('select=1', 'select=0,policy-select-name=DIRECT')
+        source += '[URL Rewrite]\n^https://example.com https://example.org 302\n[MITM]\nenable = false\n'
+        result = generate(source)
+        self.assertIn('select=0,policy-select-name=DIRECT', result)
+        for section in ('[General]', '[Host]', '[URL Rewrite]', '[MITM]'):
+            self.assertEqual(entries(result, section), entries(source, section))
+        selected = generate(self.source.replace('select=1', 'policy-select-name=PROXY'))
+        self.assertIn('policy-select-name=节点选择', selected)
+
+    def test_conflicting_upstream_group_rejected(self):
+        with self.assertRaises(ValueError):
+            generate(self.source.replace('媒体 =', '节点选择 ='))
 
     def test_invalid_source_rejected(self):
         for source in ('<html>Error</html>', self.source + '[Rule]\n'):
@@ -96,6 +110,6 @@ example.com = 1.2.3.4
 
     def test_reference_contains_no_credentials(self):
         ref = json.loads(REFERENCE_PATH.read_text())
-        self.assertEqual(set(ref), {'general', 'groups', 'hosts'})
+        self.assertEqual(set(ref), {'groups'})
         self.assertNotIn('ca-p12', json.dumps(ref))
         self.assertNotIn('password=', json.dumps(ref))
