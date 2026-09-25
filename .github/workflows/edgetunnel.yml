@@ -11,6 +11,7 @@ on:
       - scripts/generate_edgetunnel.py
       - scripts/test_generate_edgetunnel.py
       - .github/workflows/edgetunnel.yml
+      - custom/reference.json
 
 permissions:
   contents: write

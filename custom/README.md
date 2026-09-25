@@ -1,8 +1,9 @@
 # 自定义配置
 
 此目录保存根据上游全部 `.conf` 生成的个人版本，每天北京时间 **09:00** 更新。
-配置保留原文件名与用途；含代理策略的版本接入 `edgetunnel自动优选`。
-在 Shadowrocket 中把自己的订阅备注设为 `edgetunnel`，添加下表中的配置地址并使用配置。
+配置保留原文件名与用途；含代理策略的版本使用当前本机配置中的 `节点选择 → 自动选择｜CF最优`。
+订阅名称使用当前的 `EDGETUNNEL.CHAOSYOUTH.COM`，添加下表中的配置地址并使用配置。
+个人模板为 [reference.json](reference.json)，采自当前启用的 `cf-auto-local.conf`，包含通用设置、策略组默认选择和 Hosts；不包含证书私钥及口令。自动优选每 60 秒测试一次。
 纯广告规则不是完整的独立代理配置，需按其原用途与其他规则配合使用。
 
 | 配置 | 导入地址 |
@@ -23,4 +24,4 @@
 | 白名单规则＋去广告 | [sr_top500_whitelist_ad.conf](https://raw.githubusercontent.com/chaosyouth/Shadowrocket-ADBlock-Rules-Forever/release/custom/sr_top500_whitelist_ad.conf) |
 
 新增文件以本目录实际内容为准。完整说明见 [EDGETUNNEL.md](../EDGETUNNEL.md)。
-这些 `.conf` 是生成结果；修改统一转换逻辑请编辑 [生成脚本](../scripts/generate_edgetunnel.py)，避免手动改动在每日更新时丢失。
+这些 `.conf` 是生成结果；个人设置请编辑 [reference.json](reference.json)，修改转换逻辑请编辑 [生成脚本](../scripts/generate_edgetunnel.py)，避免直接改生成文件后在每日更新时丢失。修改模板会自动触发重新生成，本机后续配置变动不会自动同步到模板。
