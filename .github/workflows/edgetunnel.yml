@@ -29,15 +29,18 @@ jobs:
           ref: release
       - name: Test generator
         run: python3 -m unittest discover -s scripts -p 'test_*.py'
-      - name: Fetch upstream and generate
-        run: |
-          curl --fail --location --retry 3 --max-time 60 \
-            https://raw.githubusercontent.com/Johnshall/Shadowrocket-ADBlock-Rules-Forever/release/lazy_group.conf \
-            --output "$RUNNER_TEMP/lazy_group.conf"
-          python3 scripts/generate_edgetunnel.py "$RUNNER_TEMP/lazy_group.conf" edgetunnel.conf
+      - name: Read upstream release
+        uses: actions/checkout@v4
+        with:
+          repository: Johnshall/Shadowrocket-ADBlock-Rules-Forever
+          ref: release
+          path: upstream-src
+          persist-credentials: false
+      - name: Generate all custom configurations
+        run: python3 scripts/generate_edgetunnel.py upstream-src custom edgetunnel.conf
       - name: Publish only changed output
         run: |
-          git add edgetunnel.conf
+          git add -A -- custom edgetunnel.conf
           if git diff --cached --quiet; then
             echo 'Configuration unchanged'
             exit 0

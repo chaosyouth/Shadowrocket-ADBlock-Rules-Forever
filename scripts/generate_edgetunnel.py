@@ -12,9 +12,9 @@ POLICY = (
 
 
 def generate(source):
-    required = ["[General]", "[Proxy Group]", "[Rule]"]
     lines = source.splitlines()
-    if any(lines.count(section) != 1 for section in required):
+    sections = [line for line in lines if line.startswith("[") and line.endswith("]")]
+    if lines.count("[Rule]") != 1 or len(sections) != len(set(sections)):
         raise ValueError("上游配置缺少必要区段或存在重复区段，停止发布")
     if any(line.split("=", 1)[0].strip() == GROUP for line in lines):
         raise ValueError("上游已包含同名策略组，停止发布")
@@ -47,12 +47,31 @@ def generate(source):
                     replacements += 1
                 line = ",".join(parts)
         output.append(line)
-    if not replacements:
-        raise ValueError("上游未发现 PROXY 引用，请检查格式变化")
-    return "\n".join(line.rstrip() for line in output) + "\n"
+    if replacements and "[Proxy Group]" not in sections:
+        index = output.index("[Rule]")
+        output[index:index] = ["[Proxy Group]", POLICY, ""]
+    elif not replacements and "[Proxy Group]" in sections:
+        output.remove(POLICY)
+    return "\n".join(line.rstrip() for line in output).rstrip() + "\n"
+
+
+def generate_all(source_dir, destination_dir, legacy_path):
+    sources = sorted(source_dir.glob("*.conf"))
+    if not sources or not (source_dir / "lazy_group.conf").is_file():
+        raise ValueError("上游配置集合不完整，停止发布")
+    # Validate every input before replacing any published output.
+    results = {path.name: generate(path.read_text(encoding="utf-8-sig")) for path in sources}
+    destination_dir.mkdir(parents=True, exist_ok=True)
+    for name, content in results.items():
+        (destination_dir / name).write_text(content, encoding="utf-8")
+    for path in destination_dir.glob("*.conf"):
+        if path.name not in results:
+            path.unlink()
+    # Keep the previously published URL working.
+    legacy_path.write_text(results["lazy_group.conf"], encoding="utf-8")
+    print(f"Generated {len(results)} custom configurations")
 
 
 if __name__ == "__main__":
-    source, destination = map(Path, sys.argv[1:])
-    result = generate(source.read_text(encoding="utf-8-sig"))
-    destination.write_text(result, encoding="utf-8")
+    source, destination, legacy = map(Path, sys.argv[1:])
+    generate_all(source, destination, legacy)
