@@ -1,9 +1,11 @@
 # Shadowrocket CF 自动优选配置
 
+下载目录：https://chaosyouth.github.io/Shadowrocket-ADBlock-Rules-Forever/
+
 全部生成文件位于 [custom/](custom/README.md)，与上游配置同名。
 
 含策略组的懒人配置地址：
-https://raw.githubusercontent.com/chaosyouth/Shadowrocket-ADBlock-Rules-Forever/release/custom/lazy_group.conf
+https://chaosyouth.github.io/Shadowrocket-ADBlock-Rules-Forever/custom/lazy_group.conf
 
 之前的 `release/edgetunnel.conf` 地址继续可用，其内容与 `custom/lazy_group.conf` 相同。
 
@@ -25,7 +27,7 @@ https://raw.githubusercontent.com/chaosyouth/Shadowrocket-ADBlock-Rules-Forever/
 3. 确认 `自动选择｜CF最优` 包含候选节点。测速由客户端执行，按延迟与可用性选择，不等同于最大下载带宽，也不保证旧连接无缝迁移。
 4. 仓库更新后，客户端仍需更新远程配置。
 
-Actions 每天北京时间 **09:00**（UTC 01:00）读取 Johnshall 的 release 分支根目录所有 `.conf`，生成同名自定义版本，内容变化才提交。上游新增、删除配置时同步调整输出。全部输入校验通过后才写入输出；读取上游配置数据，不执行上游脚本。
+Actions 每天北京时间 **09:00**（UTC 01:00）读取 Johnshall 的 release 分支根目录所有 `.conf`，生成同名自定义版本，内容变化才提交；随后通过 GitHub Actions 部署到 GitHub Pages。上游新增、删除配置时同步调整输出。全部输入校验通过后才写入输出；读取上游配置数据，不执行上游脚本。
 
 修改 CF 设置请编辑 `custom/reference.json`，提交后会自动重新生成。不要直接修改生成的 `.conf`，否则下一次生成会覆盖。本机配置后续变化不会自动同步到模板。
 

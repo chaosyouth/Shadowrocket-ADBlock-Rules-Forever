@@ -10,6 +10,7 @@ on:
     paths:
       - scripts/generate_edgetunnel.py
       - scripts/test_generate_edgetunnel.py
+      - scripts/build_pages.py
       - .github/workflows/edgetunnel.yml
       - custom/reference.json
 
@@ -50,3 +51,23 @@ jobs:
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git commit -m 'Update edgetunnel configuration from upstream'
           git push origin HEAD:release
+      - name: Prepare configuration downloads
+        run: python3 scripts/build_pages.py "$RUNNER_TEMP/pages"
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ${{ runner.temp }}/pages
+
+  deploy:
+    needs: generate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy configuration downloads
+        id: deployment
+        uses: actions/deploy-pages@v4
